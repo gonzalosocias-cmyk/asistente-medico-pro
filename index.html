@@ -506,6 +506,10 @@
     fetch('/api/config?token=' + urlToken)
       .then(r => r.json())
       .then(config => {
+        if (config.error === "Suscripción vencida") {
+          document.getElementById('bienvenida').classList.remove('oculto');
+          return;
+        }
         if (config.apikey) {
           localStorage.setItem('ciudad', config.ciudad);
           localStorage.setItem('apikey', config.apikey);
