@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#001a6e" />
+  <title>Asistente</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      width: 100%;
+      background: #001a6e;
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+    }
+    header p { font-size: 12px; opacity: 0.7; margin-bottom: 2px; }
+    header h1 { font-size: 18px; font-weight: 500; }
+    .container { width: 100%; max-width: 420px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .modo-tabs { display: flex; gap: 8px; }
+    .tab {
+      flex: 1; padding: 10px; border-radius: 8px; border: none;
+      font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .tab.active { background: #001a6e; color: white; }
+    .tab.inactive { background: white; color: #666; border: 0.5px solid #ddd; }
+    .card {
+      background: white; border-radius: 12px;
+      border: 0.5px solid #e0e0e0; padding: 14px;
+    }
+    .card label { font-size: 12px; color: #888; display: block; margin-bottom: 6px; }
+    textarea {
+      width: 100%; border: none; outline: none; resize: none;
+      font-size: 14px; line-height: 1.6; color: #333;
+      font-family: inherit; min-height: 100px;
+    }
+    .acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .accion {
+      background: #f5f5f5; border: 0.5px solid #e0e0e0;
+      border-radius: 8px; padding: 10px; text-align: center;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .accion:hover { background: #e8e8e8; }
+    .accion p:first-child { font-size: 11px; color: #888; margin-bottom: 3px; }
+    .accion p:last-child { font-size: 13px; font-weight: 500; color: #333; }
+    .mic-wrap { display: flex; justify-content: center; padding: 8px 0; }
+    .mic-btn {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: #001a6e; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.1s, background 0.2s;
+    }
+    .mic-btn:active { transform: scale(0.95); }
+    .mic-btn.grabando { background: #c0392b; animation: pulso 1s infinite; }
+    @keyframes pulso { 0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,0.4)} 50%{box-shadow:0 0 0 12px rgba(192,57,43,0)} }
+    .mic-label { text-align: center; font-size: 12px; color: #888; margin-top: 4px; }
+    .enviar-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .enviar-btn {
+      padding: 12px; border-radius: 8px; border: 0.5px solid #e0e0e0;
+      background: white; font-size: 13px; color: #333;
+      cursor: pointer; text-align: center; transition: background 0.2s;
+    }
+    .enviar-btn:hover { background: #f0f0f0; }
+    .resultado {
+      background: white; border-radius: 12px;
+      border: 0.5px solid #e0e0e0; padding: 14px;
+      display: none;
+    }
+    .resultado label { font-size: 12px; color: #888; display: block; margin-bottom: 6px; }
+    .resultado-texto { font-size: 14px; line-height: 1.6; color: #333; white-space: pre-wrap; }
+    .copiar-btn {
+      margin-top: 10px; width: 100%; padding: 10px;
+      background: #001a6e; color: white; border: none;
+      border-radius: 8px; font-size: 14px; cursor: pointer;
+    }
+    .estado { text-align: center; font-size: 13px; color: #888; min-height: 20px; }
+    .config-link { text-align: center; padding: 8px 0; }
+    .config-link a { font-size: 12px; color: #888; text-decoration: none; }
+    #config-panel {
+      background: white; border-radius: 12px;
+      border: 0.5px solid #e0e0e0; padding: 14px;
+      display: none; flex-direction: column; gap: 10px;
+    }
+    #config-panel.visible { display: flex; }
+    #config-panel label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; }
+    #config-panel input {
+      width: 100%; padding: 8px 10px; border-radius: 8px;
+      border: 0.5px solid #ddd; font-size: 14px; outline: none;
+    }
+    #config-panel button {
+      padding: 10px; background: #001a6e; color: white;
+      border: none; border-radius: 8px; font-size: 14px; cursor: pointer;
+    }
+
+    #bienvenida {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #f0f2f5; z-index: 999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #bienvenida.oculto { display: none; }
+    .bienvenida-card {
+      background: white; border-radius: 16px; border: 0.5px solid #e0e0e0;
+      padding: 28px 24px; max-width: 380px; width: 100%; text-align: center;
+    }
+    .bienvenida-logo {
+      width: 64px; height: 64px; border-radius: 50%; background: #001a6e;
+      margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
+    }
+    .bienvenida-card h2 { font-size: 20px; font-weight: 500; color: #333; margin-bottom: 8px; }
+    .bienvenida-card p { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 16px; }
+    .features { text-align: left; margin-bottom: 20px; }
+    .feature { font-size: 13px; color: #555; padding: 4px 0; }
+    .precio { font-size: 22px; font-weight: 500; color: #001a6e; margin-bottom: 6px; }
+    .precio-sub { font-size: 12px; color: #888; margin-bottom: 20px; }
+    .btn-suscribir {
+      display: block; width: 100%; padding: 14px;
+      background: #001a6e; color: white; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 500;
+      cursor: pointer; text-decoration: none; margin-bottom: 10px;
+    }
+    .btn-acceso {
+      display: block; width: 100%; padding: 12px;
+      background: white; color: #001a6e;
+      border: 0.5px solid #001a6e; border-radius: 10px;
+      font-size: 14px; cursor: pointer; text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="bienvenida">
+  <div class="bienvenida-card">
+    <div class="bienvenida-logo">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </div>
+    <h2>Asistente Clínico</h2>
+    <p>Tu copiloto médico y social inteligente, adaptado al contexto uruguayo.</p>
+    <div class="features">
+      <div class="feature">✓ Mejora redacción de historias clínicas</div>
+      <div class="feature">✓ Diagnósticos diferenciales y tratamientos</div>
+      <div class="feature">✓ Informes sociales profesionales</div>
+      <div class="feature">✓ Recursos locales y contactos a Telegram</div>
+      <div class="feature">✓ Transcripción de entrevistas por voz</div>
+    </div>
+    <p class="precio">$499 UYU / mes</p>
+    <p class="precio-sub">+ tu propia API key de Anthropic (~$5 USD/mes)</p>
+    <a class="btn-suscribir" href="https://mpago.la/2eezmcn" target="_blank">Suscribirme ahora</a>
+    <a class="btn-acceso" href="#" onclick="tenerAcceso()">Ya tengo acceso</a>
+  </div>
+</div>
+
+
+<header>
+  <p>Asistente</p>
+  <h1 id="titulo-ciudad">Trinidad, Flores</h1>
+</header>
+
+<div class="container">
+
+  <div class="modo-tabs">
+    <button class="tab active" id="tab-medico" onclick="setModo('medico')">Médico</button>
+    <button class="tab inactive" id="tab-social" onclick="setModo('social')">Social</button>
+  </div>
+
+  <div class="card">
+    <label>Texto del caso</label>
+    <textarea id="texto-caso" placeholder="Escribí o dictá el caso aquí..."></textarea>
+  </div>
+
+  <div class="acciones" id="acciones-medico">
+    <div class="accion" onclick="procesar('base')">
+      <p>Mejorar</p><p>Redacción</p>
+    </div>
+    <div class="accion" onclick="procesar('pd')">
+      <p>Diagnósticos</p><p>/PD</p>
+    </div>
+    <div class="accion" onclick="procesar('tx')">
+      <p>Tratamiento</p><p>/TX</p>
+    </div>
+    <div class="accion" onclick="procesar('lab')">
+      <p>Laboratorio</p><p>/LAB</p>
+    </div>
+  </div>
+
+  <div class="acciones" id="acciones-social" style="display:none;">
+    <div class="accion" onclick="procesar('as')" style="grid-column: span 2;">
+      <p>Generar</p><p>Informe Social</p>
+    </div>
+  </div>
+
+  <div class="mic-wrap">
+    <button class="mic-btn" id="mic-btn" onclick="toggleGrabacion()">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+  </div>
+  <p class="mic-label" id="mic-label">Mantené presionado para grabar</p>
+
+  <p class="estado" id="estado"></p>
+
+  <div class="resultado" id="resultado">
+    <label>Resultado</label>
+    <div class="resultado-texto" id="resultado-texto"></div>
+    <button class="copiar-btn" onclick="copiarResultado()">Copiar al portapapeles</button>
+  </div>
+
+  <div class="enviar-btns">
+    <button class="enviar-btn" onclick="enviarTelegram()">Telegram</button>
+    <button class="enviar-btn" onclick="enviarEmail()">Email</button>
+  </div>
+
+  <div class="config-link">
+    <a href="#" onclick="toggleConfig()">Configuración</a>
+  </div>
+
+  <div id="config-panel">
+    <label>Ciudad / Departamento</label>
+    <input id="cfg-ciudad" placeholder="Ej: Trinidad, Flores" />
+    <label>API Key Claude</label>
+    <input id="cfg-apikey" type="password" placeholder="sk-ant-..." />
+    <label>API Key OpenAI (transcripción)</label>
+    <input id="cfg-openai" type="password" placeholder="sk-..." />
+    <label>Telegram Bot Token</label>
+    <input id="cfg-token" type="password" placeholder="123456:ABC..." />
+    <label>Telegram Chat ID</label>
+    <input id="cfg-chatid" placeholder="123456789" />
+    <label>Email destino</label>
+    <input id="cfg-email" placeholder="tu@email.com" />
+    <button onclick="guardarConfig()">Guardar configuración</button>
+  </div>
+
+</div>
+
+<script>
+  let modo = 'medico';
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let grabando = false;
+  let ultimoResultado = '';
+
+  function cargarConfig() {
+    document.getElementById('cfg-ciudad').value = localStorage.getItem('ciudad') || 'Trinidad, Flores';
+    document.getElementById('cfg-apikey').value = localStorage.getItem('apikey') || '';
+    document.getElementById('cfg-openai').value = localStorage.getItem('openai_apikey') || '';
+    document.getElementById('cfg-token').value = localStorage.getItem('tg_token') || '';
+    document.getElementById('cfg-chatid').value = localStorage.getItem('tg_chatid') || '';
+    document.getElementById('cfg-email').value = localStorage.getItem('email') || '';
+    document.getElementById('titulo-ciudad').textContent = localStorage.getItem('ciudad') || 'Trinidad, Flores';
+  }
+
+  function guardarConfig() {
+    localStorage.setItem('ciudad', document.getElementById('cfg-ciudad').value);
+    localStorage.setItem('apikey', document.getElementById('cfg-apikey').value);
+    localStorage.setItem('openai_apikey', document.getElementById('cfg-openai').value);
+    localStorage.setItem('tg_token', document.getElementById('cfg-token').value);
+    localStorage.setItem('tg_chatid', document.getElementById('cfg-chatid').value);
+    localStorage.setItem('email', document.getElementById('cfg-email').value);
+    document.getElementById('titulo-ciudad').textContent = document.getElementById('cfg-ciudad').value;
+    toggleConfig();
+    setEstado('Configuración guardada');
+  }
+
+  function toggleConfig() {
+    const p = document.getElementById('config-panel');
+    p.classList.toggle('visible');
+  }
+
+  function setModo(m) {
+    modo = m;
+    document.getElementById('tab-medico').className = 'tab ' + (m === 'medico' ? 'active' : 'inactive');
+    document.getElementById('tab-social').className = 'tab ' + (m === 'social' ? 'active' : 'inactive');
+    document.getElementById('acciones-medico').style.display = m === 'medico' ? 'grid' : 'none';
+    document.getElementById('acciones-social').style.display = m === 'social' ? 'grid' : 'none';
+  }
+
+  function setEstado(msg) {
+    document.getElementById('estado').textContent = msg;
+  }
+
+  async function toggleGrabacion() {
+    if (!grabando) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          await transcribir(blob);
+          stream.getTracks().forEach(t => t.stop());
+        };
+        mediaRecorder.start();
+        grabando = true;
+        document.getElementById('mic-btn').classList.add('grabando');
+        document.getElementById('mic-label').textContent = 'Grabando... tocá para detener';
+        setEstado('Grabando...');
+      } catch (e) {
+        setEstado('Error: permiso de micrófono denegado');
+      }
+    } else {
+      mediaRecorder.stop();
+      grabando = false;
+      document.getElementById('mic-btn').classList.remove('grabando');
+      document.getElementById('mic-label').textContent = 'Mantené presionado para grabar';
+      setEstado('Procesando audio...');
+    }
+  }
+
+  async function transcribir(blob) {
+    const apikey = localStorage.getItem('apikey');
+    if (!apikey) { setEstado('Configurá la API key primero'); return; }
+    try {
+      const formData = new FormData();
+      formData.append('file', blob, 'audio.webm');
+      formData.append('model', 'whisper-1');
+      formData.append('language', 'es');
+      const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('openai_apikey') },
+        body: formData
+      });
+      const data = await resp.json();
+      if (data.text) {
+        document.getElementById('texto-caso').value = data.text;
+        setEstado('Transcripción lista');
+      } else {
+        setEstado('Error en transcripción');
+      }
+    } catch (e) {
+      setEstado('Error: ' + e.message);
+    }
+  }
+
+  async function procesar(tipo) {
+    const texto = document.getElementById('texto-caso').value.trim();
+    if (!texto) { setEstado('Escribí o grabá un caso primero'); return; }
+    const apikey = localStorage.getItem('apikey');
+    if (!apikey) { setEstado('Configurá la API key primero'); return; }
+    const ciudad = localStorage.getItem('ciudad') || 'Trinidad, Flores';
+
+    const prompts = {
+      base: `Eres un asistente médico experto. Mejorá la redacción con lenguaje médico formal en español rioplatense. Mantené extensión similar. Completá valores normales implícitos. Detectá inconsistencias al final entre [ALERTA: ...]. Sin formato especial, texto plano. No uses frases introductorias.`,
+      pd: `Eres un médico internista experto. Listá diagnósticos diferenciales en orden de probabilidad con justificación breve. Contexto: policlínica rural Uruguay. Texto plano, sin asteriscos.`,
+      tx: `Eres un médico internista experto. Sugerí opciones de tratamiento con dosis, vía y duración. Contexto rural uruguayo. Texto plano, sin asteriscos.`,
+      lab: `Eres un médico internista experto. Sugerí laboratorios e imagenología priorizando disponibilidad rural uruguaya. Texto plano, sin asteriscos.`,
+      as: `Eres un asistente experto en trabajo social en ${ciudad}, Uruguay. Redactá un informe social profesional en primera persona. Identificá recursos según edad y situación. Buscá recursos locales de ${ciudad} y líneas nacionales uruguayas relevantes. Para adultos mayores usá INMAYORES y BPS, nunca INAU. Pasos concretos y prioritarios. Sin formato especial, texto plano. No hacer preguntas al final. Máximo 250 palabras. Al final agregá obligatoriamente:\n[CONTACTOS]\nnombre: telefono o direccion\n[/CONTACTOS]\nTeléfonos en formato +598XXXXXXXXX sin espacios. Direcciones como https://maps.google.com/?q=lugar+${ciudad.replace(/ /g,'+')}+Uruguay`
+    };
+
+    const usaWeb = ['pd', 'tx', 'lab', 'as'].includes(tipo);
+    const modelo = usaWeb ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+
+    setEstado('Consultando...');
+    document.getElementById('resultado').style.display = 'none';
+
+    try {
+      const body = {
+        model: modelo,
+        max_tokens: 1024,
+        system: prompts[tipo],
+        messages: [{ role: 'user', content: texto }]
+      };
+      if (usaWeb) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ apikey: apikey, payload: body })
+      });
+
+      const data = await resp.json();
+      let resultado = '';
+      for (const bloque of data.content || []) {
+        if (bloque.type === 'text') resultado += bloque.text;
+      }
+      resultado = resultado.trim();
+
+      if (!resultado) { setEstado('Sin respuesta'); return; }
+
+      let informe = resultado;
+      let contactos = null;
+
+      if (tipo === 'as') {
+        const ini = resultado.indexOf('[CONTACTOS]');
+        const fin = resultado.indexOf('[/CONTACTOS]');
+        if (ini !== -1 && fin !== -1) {
+          contactos = resultado.substring(ini + 11, fin).trim();
+          informe = resultado.substring(0, ini).trim();
+        }
+      }
+
+      ultimoResultado = informe;
+      document.getElementById('resultado-texto').textContent = informe;
+      document.getElementById('resultado').style.display = 'block';
+      setEstado('Listo');
+
+      if (contactos) {
+        enviarTelegramTexto('RECURSOS DEL CASO:\n\n' + contactos);
+      }
+
+    } catch (e) {
+      setEstado('Error: ' + e.message);
+    }
+  }
+
+  function copiarResultado() {
+    navigator.clipboard.writeText(ultimoResultado).then(() => setEstado('Copiado al portapapeles'));
+  }
+
+  function enviarTelegramTexto(texto) {
+    const token = localStorage.getItem('tg_token');
+    const chatid = localStorage.getItem('tg_chatid');
+    if (!token || !chatid) return;
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatid, text: texto })
+    });
+  }
+
+  function enviarTelegram() {
+    if (!ultimoResultado) { setEstado('No hay resultado para enviar'); return; }
+    enviarTelegramTexto(ultimoResultado);
+    setEstado('Enviado a Telegram');
+  }
+
+  function enviarEmail() {
+    if (!ultimoResultado) { setEstado('No hay resultado para enviar'); return; }
+    const email = localStorage.getItem('email') || '';
+    const asunto = encodeURIComponent('Informe clínico');
+    const cuerpo = encodeURIComponent(ultimoResultado);
+    window.location.href = `mailto:${email}?subject=${asunto}&body=${cuerpo}`;
+  }
+
+
+  function mostrarBienvenida() {
+    const acceso = localStorage.getItem('tiene_acceso');
+    if (!acceso) {
+      document.getElementById('bienvenida').classList.remove('oculto');
+    }
+  }
+
+  function tenerAcceso() {
+    localStorage.setItem('tiene_acceso', '1');
+    document.getElementById('bienvenida').classList.add('oculto');
+  }
+
+  cargarConfig();
+  mostrarBienvenida();
+</script>
+
+</body>
+</html>
