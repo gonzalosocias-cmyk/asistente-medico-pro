@@ -465,8 +465,27 @@
     document.getElementById('bienvenida').classList.add('oculto');
   }
 
+  const urlToken = new URLSearchParams(window.location.search).get('token');
+if (urlToken) {
+  fetch('/api/config?token=' + urlToken)
+    .then(r => r.json())
+    .then(config => {
+      if (config.apikey) {
+        localStorage.setItem('ciudad', config.ciudad);
+        localStorage.setItem('apikey', config.apikey);
+        localStorage.setItem('openai_apikey', config.openai_apikey);
+        localStorage.setItem('tg_token', config.tg_token);
+        localStorage.setItem('tg_chatid', config.tg_chatid);
+        localStorage.setItem('email', config.email);
+        localStorage.setItem('tiene_acceso', '1');
+      }
+      cargarConfig();
+      mostrarBienvenida();
+    });
+} else {
   cargarConfig();
   mostrarBienvenida();
+}
 </script>
 
 </body>
