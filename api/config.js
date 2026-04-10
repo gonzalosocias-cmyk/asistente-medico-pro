@@ -33,5 +33,5 @@ export default function handler(req, res) {
     return res.status(403).json({ error: "Suscripción vencida" })
   }
 
-  res.json(config)
+  res.json({ ...config, vence: config.vence })
 }
