@@ -1,17 +1,17 @@
 export default function handler(req, res) {
   const configs = {
-    "dr-lopez-2024": {
+    "drlopez": {
       ciudad: "Trinidad, Flores",
-      apikey: "sk-ant-TU-KEY-AQUI",
-      openai_apikey: "sk-TU-KEY-OPENAI-AQUI",
-      tg_token: "TU-TOKEN-TELEGRAM",
-      tg_chatid: "TU-CHAT-ID",
-      email: "doctor@email.com"
+      apikey: process.env.APIKEY_DRLOPEZ,
+      openai_apikey: process.env.OPENAI_DRLOPEZ,
+      tg_token: "",
+      tg_chatid: "",
+      email: ""
     },
-    "dr-garcia-2024": {
+    "drgarcia": {
       ciudad: "Tacuarembó",
-      apikey: "sk-ant-OTRA-KEY",
-      openai_apikey: "sk-OTRA-KEY-OPENAI",
+      apikey: process.env.APIKEY_DRGARCIA,
+      openai_apikey: process.env.OPENAI_DRGARCIA,
       tg_token: "",
       tg_chatid: "",
       email: ""
