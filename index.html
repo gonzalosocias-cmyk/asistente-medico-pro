@@ -134,6 +134,18 @@
       border: 0.5px solid #001a6e; border-radius: 10px;
       font-size: 14px; cursor: pointer; text-decoration: none;
     }
+    .vencimiento-info {
+      text-align: center; font-size: 11px; color: #aaa; padding-bottom: 16px;
+    }
+    .alerta-saldo {
+      background: #fff3cd; border: 0.5px solid #ffc107;
+      border-radius: 12px; padding: 14px; text-align: center; display: none;
+    }
+    .alerta-saldo p { font-size: 13px; color: #856404; margin-bottom: 10px; }
+    .alerta-saldo a {
+      display: block; padding: 10px; background: #001a6e; color: white;
+      border-radius: 8px; font-size: 14px; text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -158,7 +170,7 @@
       <div class="feature">✓ Transcripción de entrevistas por voz</div>
     </div>
     <p class="precio">$499 UYU / mes</p>
-    <p class="precio-sub">+ tu propia API key de Anthropic (~$5 USD/mes)</p>
+    <p class="precio-sub">Todo incluido, sin configuraciones técnicas</p>
     <a class="btn-suscribir" href="https://mpago.la/2eezmcn" target="_blank">Suscribirme ahora</a>
     <a class="btn-acceso" href="#" onclick="tenerAcceso()">Ya tengo acceso</a>
   </div>
@@ -217,6 +229,11 @@
 
   <p class="estado" id="estado"></p>
 
+  <div class="alerta-saldo" id="alerta-saldo">
+    <p>Tu suscripción venció o tu saldo se agotó.<br>Renová para seguir usando el asistente.</p>
+    <a href="https://mpago.la/2eezmcn" target="_blank">Renovar suscripción</a>
+  </div>
+
   <div class="resultado" id="resultado">
     <label>Resultado</label>
     <div class="resultado-texto" id="resultado-texto"></div>
@@ -248,6 +265,8 @@
     <button onclick="guardarConfig()">Guardar configuración</button>
   </div>
 
+  <div class="vencimiento-info" id="vencimiento-info"></div>
+
 </div>
 
 <script>
@@ -265,6 +284,12 @@
     document.getElementById('cfg-chatid').value = localStorage.getItem('tg_chatid') || '';
     document.getElementById('cfg-email').value = localStorage.getItem('email') || '';
     document.getElementById('titulo-ciudad').textContent = localStorage.getItem('ciudad') || 'Trinidad, Flores';
+
+    const vence = localStorage.getItem('vence');
+    if (vence) {
+      const fecha = new Date(vence).toLocaleDateString('es-UY');
+      document.getElementById('vencimiento-info').textContent = 'Suscripción activa hasta ' + fecha;
+    }
   }
 
   function guardarConfig() {
@@ -370,6 +395,7 @@
 
     setEstado('Consultando...');
     document.getElementById('resultado').style.display = 'none';
+    document.getElementById('alerta-saldo').style.display = 'none';
 
     try {
       const body = {
@@ -382,13 +408,24 @@
 
       const resp = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apikey: apikey, payload: body })
       });
 
+      if (resp.status === 429 || resp.status === 402) {
+        setEstado('');
+        document.getElementById('alerta-saldo').style.display = 'block';
+        return;
+      }
+
       const data = await resp.json();
+
+      if (data.error) {
+        setEstado('');
+        document.getElementById('alerta-saldo').style.display = 'block';
+        return;
+      }
+
       let resultado = '';
       for (const bloque of data.content || []) {
         if (bloque.type === 'text') resultado += bloque.text;
@@ -452,7 +489,6 @@
     window.location.href = `mailto:${email}?subject=${asunto}&body=${cuerpo}`;
   }
 
-
   function mostrarBienvenida() {
     const acceso = localStorage.getItem('tiene_acceso');
     if (!acceso) {
@@ -466,26 +502,27 @@
   }
 
   const urlToken = new URLSearchParams(window.location.search).get('token');
-if (urlToken) {
-  fetch('/api/config?token=' + urlToken)
-    .then(r => r.json())
-    .then(config => {
-      if (config.apikey) {
-        localStorage.setItem('ciudad', config.ciudad);
-        localStorage.setItem('apikey', config.apikey);
-        localStorage.setItem('openai_apikey', config.openai_apikey);
-        localStorage.setItem('tg_token', config.tg_token);
-        localStorage.setItem('tg_chatid', config.tg_chatid);
-        localStorage.setItem('email', config.email);
-        localStorage.setItem('tiene_acceso', '1');
-      }
-      cargarConfig();
-      mostrarBienvenida();
-    });
-} else {
-  cargarConfig();
-  mostrarBienvenida();
-}
+  if (urlToken) {
+    fetch('/api/config?token=' + urlToken)
+      .then(r => r.json())
+      .then(config => {
+        if (config.apikey) {
+          localStorage.setItem('ciudad', config.ciudad);
+          localStorage.setItem('apikey', config.apikey);
+          localStorage.setItem('openai_apikey', config.openai_apikey);
+          localStorage.setItem('tg_token', config.tg_token);
+          localStorage.setItem('tg_chatid', config.tg_chatid);
+          localStorage.setItem('email', config.email);
+          localStorage.setItem('tiene_acceso', '1');
+          localStorage.setItem('vence', config.vence);
+        }
+        cargarConfig();
+        mostrarBienvenida();
+      });
+  } else {
+    cargarConfig();
+    mostrarBienvenida();
+  }
 </script>
 
 </body>
