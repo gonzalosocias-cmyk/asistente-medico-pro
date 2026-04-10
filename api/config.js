@@ -1,7 +1,7 @@
 export default function handler(req, res) {
   const configs = {
     "drlopez": {
-      vence: "2025-05-10",
+      vence: "2026-05-10",
       ciudad: "Trinidad, Flores",
       apikey: process.env.APIKEY_DRLOPEZ,
       openai_apikey: process.env.OPENAI_DRLOPEZ,
@@ -10,7 +10,7 @@ export default function handler(req, res) {
       email: ""
     },
     "drgarcia": {
-      vence: "2025-05-10",
+      vence: "2026-05-10",
       ciudad: "Tacuarembó",
       apikey: process.env.APIKEY_DRGARCIA,
       openai_apikey: process.env.OPENAI_DRGARCIA,
