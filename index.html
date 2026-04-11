@@ -391,7 +391,7 @@
       as: `Eres un asistente experto en trabajo social en ${ciudad}, Uruguay. Redactá un informe social profesional en primera persona. Identificá recursos según edad y situación. Buscá recursos locales de ${ciudad} y líneas nacionales uruguayas relevantes. Para adultos mayores usá INMAYORES y BPS, nunca INAU. Pasos concretos y prioritarios. Sin formato especial, texto plano. No hacer preguntas al final. Máximo 250 palabras. Al final agregá obligatoriamente:\n[CONTACTOS]\nnombre: telefono o direccion\n[/CONTACTOS]\nTeléfonos en formato +598XXXXXXXXX sin espacios. Direcciones como https://maps.google.com/?q=lugar+${ciudad.replace(/ /g,'+')}+Uruguay`
     };
 
-    const usaWeb = ['pd', 'tx', 'lab', 'as'].includes(tipo);
+    const usaWeb = ['pd', 'as'].includes(tipo);
     const modelo = 'claude-haiku-4-5-20251001';
 
     setEstado('Consultando...');
