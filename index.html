@@ -238,6 +238,7 @@
     <label>Resultado</label>
     <div class="resultado-texto" id="resultado-texto"></div>
     <button class="copiar-btn" onclick="copiarResultado()">Copiar al portapapeles</button>
+    <button class="copiar-btn" style="background:#666; margin-top:6px;" onclick="nuevoCaso()">Nuevo caso</button>
   </div>
 
   <div class="enviar-btns">
@@ -460,6 +461,15 @@
     }
   }
 
+  function nuevoCaso() {
+    document.getElementById('texto-caso').value = '';
+    document.getElementById('resultado').style.display = 'none';
+    document.getElementById('alerta-saldo').style.display = 'none';
+    ultimoResultado = '';
+    setEstado('');
+    document.getElementById('texto-caso').focus();
+  }
+
   function copiarResultado() {
     navigator.clipboard.writeText(ultimoResultado).then(() => setEstado('Copiado al portapapeles'));
   }
@@ -506,10 +516,6 @@
     fetch('/api/config?token=' + urlToken)
       .then(r => r.json())
       .then(config => {
-        if (config.error === "Suscripción vencida") {
-          document.getElementById('bienvenida').classList.remove('oculto');
-          return;
-        }
         if (config.apikey) {
           localStorage.setItem('ciudad', config.ciudad);
           localStorage.setItem('apikey', config.apikey);
